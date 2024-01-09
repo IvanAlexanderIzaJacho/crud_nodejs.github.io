@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editar Empleado</title>
+  <!-- Enlaces a Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    form {
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;        
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    h1 {
+      color: #007bff;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h1 class="mt-5 mb-4">Editar Cliente</h1>
+
+    <form id="edit-client-form">
+      <div class="mb-3 form-group">
+        <label for="dniCliente" class="form-label">DNI:</label>
+        <input type="text" class="form-control" id="dniCliente" name="dniCliente" required>
+        <div class="invalid-feedback"></div>
+      </div>
+      <div class="mb-3 form-group">
+        <label for="apellidoCliente" class="form-label">Apellido:</label>
+        <input type="text" class="form-control" id="apellidoCliente" name="apellidoCliente" required>
+        <div class="invalid-feedback"></div>
+      </div>
+      <div class="mb-3 form-group">
+        <label for="nombreCliente" class="form-label">Nombre:</label>
+        <input type="text" class="form-control" id="nombreCliente" name="nombreCliente" required>
+        <div class="invalid-feedback"></div>
+      </div>
+      <div class="mb-3 form-group">
+        <label for="direccionCliente" class="form-label">Dirección:</label>
+        <input type="text" class="form-control" id="direccionCliente" name="direccionCliente" required>
+        <div class="invalid-feedback"></div>
+      </div>
+      <div class="mb-3 form-group">
+        <label for="edadCliente" class="form-label">Edad:</label>
+        <input type="text" class="form-control" id="edadCliente" name="edadCliente" required>
+        <div class="invalid-feedback"></div>
+      </div>
+      <center>
+        <button type="submit" class="btn btn-outline-warning">Actualizar</button>
+        <a href="/" class="btn btn-outline-danger">Cancelar</a>
+      </center>
+    </form>
+  </div>
+
+  <!-- Enlaces a Bootstrap y scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="script.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const urlParams = new URLSearchParams(window.location.search);
+      const employeeId = urlParams.get("id");
+
+      // Función para cargar los datos del empleado
+      async function loadEmployeeData() {
+        try {
+          const response = await fetch(`/api/employees/${employeeId}`);
+          const employeeData = await response.json();
+
+          // Rellenar los campos del formulario con los datos del empleado
+          document.getElementById("dniCliente").value = employeeData.dniCliente;
+          document.getElementById("apellidoCliente").value = employeeData.apellidoCliente;
+          document.getElementById("nombreCliente").value = employeeData.nombreCliente;
+          document.getElementById("direccionCliente").value = employeeData.direccionCliente;
+          document.getElementById("edadCliente").value = employeeData.edadCliente;
+        } catch (error) {
+          console.error("Error al cargar los datos del empleado:", error);
+        }
+      }
+
+      // Al cargar la página, cargar los datos del empleado
+      loadEmployeeData();
+
+      // Manejar el envío del formulario
+      document.getElementById("edit-client-form").addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        // Limpiar mensajes de error
+        clearValidationErrors();
+
+        // Obtener los datos del formulario
+        const formData = new FormData(this);
+        const requestData = {};
+        formData.forEach((value, key) => {
+          requestData[key] = value;
+        });
+
+        // Validar y enviar los datos
+        const isValid = validateFields(requestData);
+
+        if (isValid) {
+          try {
+            const response = await fetch(`/api/employees/${employeeId}`, {
+              method: "PATCH",  // Cambia a PATCH para actualizar datos
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify(requestData)
+            });
+
+            if (response.ok) {
+              // Actualización exitosa, redirigir al listado de clientes
+              window.location.href = "/";
+            } else {
+              // Mostrar mensajes de error si es necesario
+              console.error("Error al actualizar empleado:", response.statusText);
+            }
+          } catch (error) {
+            console.error("Error al actualizar empleado:", error);
+          }
+        }
+      });
+
+      // Función para validar los campos del formulario
+      function validateFields(data) {
+        let isValid = true;
+
+        // Validar DNI (solo números)
+        const dniRegex = /^[0-9]+$/;
+        if (!dniRegex.test(data.dniCliente)) {
+          isValid = false;
+          displayValidationError("dniCliente", "Ingrese solo números para el DNI.");
+        }
+
+        // Validar Apellido y Nombre (solo letras)
+        const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúñÑ\s]+$/;
+        if (!nameRegex.test(data.apellidoCliente)) {
+          isValid = false;
+          displayValidationError("apellidoCliente", "Ingrese solo letras y espacios en blanco.");
+        }
+
+        if (!nameRegex.test(data.nombreCliente)) {
+          isValid = false;
+          displayValidationError("nombreCliente", "Ingrese solo letras y espacios en blanco.");
+        }
+
+        // Validar Dirección (letras y números)
+        const addressRegex = /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9\s]+$/;
+        if (!addressRegex.test(data.direccionCliente)) {
+          isValid = false;
+          displayValidationError("direccionCliente", "Ingrese solo letras, números y espacios en blanco para la dirección.");
+        }
+
+        // Validar Edad (solo números)
+        const ageRegex = /^[0-9]+$/;
+        if (!ageRegex.test(data.edadCliente)) {
+          isValid = false;
+          displayValidationError("edadCliente", "Ingrese solo números para la edad.");
+        }
+
+        return isValid;
+      }
+
+      // Mostrar mensaje de error para un campo específico
+      function displayValidationError(fieldName, message) {
+        const field = document.getElementById(fieldName);
+        const feedback = field.nextElementSibling;
+        if (feedback && feedback.classList.contains("invalid-feedback")) {
+          feedback.textContent = message;
+          field.classList.add("is-invalid");
+        }
+      }
+
+      // Limpiar mensajes de error al enfocar en un campo
+      document.getElementById("edit-client-form").addEventListener("focusin", function (event) {
+        const field = event.target;
+        if (field.classList.contains("is-invalid")) {
+          field.classList.remove("is-invalid");
+          const feedback = field.nextElementSibling;
+          if (feedback && feedback.classList.contains("invalid-feedback")) {
+            feedback.textContent = "";
+          }
+        }
+      });
+
+      // Función para limpiar todos los mensajes de error
+      function clearValidationErrors() {
+        const errorFields = document.querySelectorAll(".is-invalid");
+        errorFields.forEach(field => {
+          field.classList.remove("is-invalid");
+          const feedback = field.nextElementSibling;
+          if (feedback && feedback.classList.contains("invalid-feedback")) {
+            feedback.textContent = "";
+          }
+        });
+      }
+    });
+  </script>
+
+</body>
+</html>
